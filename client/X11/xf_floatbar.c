@@ -181,6 +181,7 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 	xfContext* xfc;
 	Status status;
 	XWindowAttributes attr = { 0 };
+	rdpSettings* settings = NULL;
 
 	WINPR_ASSERT(floatbar);
 	if (floatbar->created)
@@ -197,13 +198,14 @@ static BOOL create_floatbar(xfFloatbar* floatbar)
 		return FALSE;
 	}
 	floatbar->x = attr.x + attr.width / 2 - FLOATBAR_DEFAULT_WIDTH / 2;
-	floatbar->y = 0;
+	settings = xfc->common.context.settings;
+	floatbar->y = settings->MonitorLocalShiftY;
 
 	if (((floatbar->flags & 0x0004) == 0) && !floatbar->locked)
 		floatbar->y = -FLOATBAR_HEIGHT + 1;
 
 	floatbar->handle =
-	    XCreateWindow(xfc->display, floatbar->root_window, floatbar->x, 0, FLOATBAR_DEFAULT_WIDTH,
+	    XCreateWindow(xfc->display, floatbar->root_window, floatbar->x, floatbar->y, FLOATBAR_DEFAULT_WIDTH,
 	                  FLOATBAR_HEIGHT, 0, CopyFromParent, InputOutput, CopyFromParent, 0, NULL);
 	floatbar->width = FLOATBAR_DEFAULT_WIDTH;
 	floatbar->height = FLOATBAR_HEIGHT;
@@ -662,7 +664,7 @@ static void xf_floatbar_resize(xfFloatbar* floatbar, const XMotionEvent* event)
 	/* only resize and move window if still above minimum width */
 	if (FLOATBAR_MIN_WIDTH < width)
 	{
-		XMoveResizeWindow(xfc->display, floatbar->handle, x, 0, width, floatbar->height);
+		XMoveResizeWindow(xfc->display, floatbar->handle, x, floatbar->y, width, floatbar->height);
 		floatbar->x = x;
 		floatbar->width = width;
 	}
@@ -688,7 +690,7 @@ static void xf_floatbar_dragging(xfFloatbar* floatbar, const XMotionEvent* event
 		return;
 
 	/* move window to new x position */
-	XMoveWindow(xfc->display, floatbar->handle, x, 0);
+	XMoveWindow(xfc->display, floatbar->handle, x, floatbar->y);
 	/* update struct values for the next event */
 	floatbar->last_motion_x_root = floatbar->last_motion_x_root + movement;
 	floatbar->x = x;
